@@ -4,30 +4,23 @@ session_start();
 // Include the session check to see if user is already logged in
 // require_once 'includes/session_check.php';
 
-// Check if user is already logged in and redirect to their dashboard
+// Check if user is already logged in and (only) allow HR or Accounting
 if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
-    // User is already logged in, redirect to their appropriate dashboard
-    switch ($_SESSION['role_id']) {
-        case 1: // Super Admin
-            header("Location: super_admin/superadmin_dashboard.php");
-            exit();
-        case 2: // Admin
-            header("Location: admin/admin_dashboard.php");
-            exit();
-        case 3: // HR
-            header("Location: hr/hr_dashboard.php");
-            exit();
-        case 4: // Accounting
-            header("Location: accounting/accounting_dashboard.php");
-            exit();
-        case 5: // Security Guard
-            header("Location: guards/guards_dashboard.php");
-            exit();
-        default:
-            // Invalid role, logout and continue to login page
-            session_destroy();
-            break;
+    $roleId = (int) $_SESSION['role_id'];
+
+    if ($roleId === 1) { // hr
+        header("Location: /views/hr/dashboard.php");
+        exit();
     }
+
+    if ($roleId === 2) { // accounting
+        header("Location: /views/accounting/dashboard.php");
+        exit();
+    }
+
+    // Any other role is not allowed to use this portal
+    $_SESSION['toast_error'] = 'Only HR and accounting users can sign in to this portal.';
+    unset($_SESSION['user_id'], $_SESSION['role_id']);
 }
 
 // Get toast messages if any
@@ -279,7 +272,7 @@ unset($_SESSION['toast_error'], $_SESSION['toast_success']);
             <h2>Welcome Back!</h2>
             <p>Please sign in to access your account</p>
             
-            <form method="POST" action="login_processing.php" id="loginForm">
+            <form method="POST" action="backend/login_processing.php" id="loginForm">
                 <div class="form-floating mb-3">
                     <input type="email" class="form-control" id="email" name="email" placeholder="name@example.com" required>
                     <label for="email"><i class="fas fa-envelope me-2"></i>Email Address</label>
