@@ -1,0 +1,24 @@
+# Environment variables
+.env
+
+# Uploads folder (user files, DTR, resumes, profile pics)
+uploads/
+
+# Composer dependencies
+/vendor/
+
+# PHP error logs
+*.log
+uploads/error/
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE/editor files
+*.idea/
+*.vscode/
+
+# Temporary files
+*.tmp
+*.swp
