@@ -89,12 +89,12 @@ try {
 
     // Redirect based on role (hr or accounting only)
     if ($roleName === 'hr') {
-        header('Location: /views/hr/dashboard.php');
+        header('Location: /views/hr/index.php');
         exit();
     }
 
     if ($roleName === 'accounting') {
-        header('Location: /views/accounting/dashboard.php');
+        header('Location: /views/accounting/index.php');
         exit();
     }
 

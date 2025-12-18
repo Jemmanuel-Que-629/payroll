@@ -29,6 +29,8 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <!-- Font Awesome Icons -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- SweetAlert2 for toast notifications -->
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
     <style>
         body {
             font-family: 'Poppins', sans-serif;
@@ -573,7 +575,7 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                             
                             <div id="apply" class="mt-5">
                                 <h4 class="fw-bold mb-4">Apply Now</h4>
-                                <form id="applicationForm" method="POST" action="process_application.php" enctype="multipart/form-data">
+                                <form id="applicationForm" method="POST" action="backend/process_application.php" enctype="multipart/form-data">
                                     <div class="row g-3">
                                         <div class="col-md-3">
                                             <label for="firstName" class="form-label fw-bold">First Name <span class="text-danger">*</span></label>
@@ -701,18 +703,10 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                                             break;
                                     }
                                     ?>
-                                    <div class="alert <?php echo $alertClass; ?> mt-4" id="statusAlert" role="alert">
+                                    <div class="alert <?php echo $alertClass; ?> mt-4 d-none" id="statusAlert" role="alert">
                                         <i class="fa-solid <?php echo $alertIcon; ?> me-2"></i>
                                         <?php echo $alertMessage; ?>
                                     </div>
-                                    <script>
-                                        setTimeout(function() {
-                                            document.getElementById('statusAlert').classList.add('fade');
-                                            setTimeout(function() {
-                                                document.getElementById('statusAlert').style.display = 'none';
-                                            }, 500);
-                                        }, 5000);
-                                    </script>
                                 <?php endif; ?>
                             </div>
                             
@@ -791,27 +785,27 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                     <div class="card border-0 shadow">
                         <div class="card-body p-4 p-md-5">
                             <h4 class="fw-bold mb-4">Send Us a Message</h4>
-                            <form>
+                            <form id="contactForm" method="POST" action="backend/messages.php">
                                 <div class="row g-3">
                                     <div class="col-md-6">
                                         <label for="contactName" class="form-label">Your Name</label>
-                                        <input type="text" class="form-control" id="contactName" required>
+                                        <input type="text" class="form-control" id="contactName" name="name" required>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="contactEmail" class="form-label">Your Email</label>
-                                        <input type="email" class="form-control" id="contactEmail" required>
+                                        <input type="email" class="form-control" id="contactEmail" name="email" required>
                                     </div>
                                     <div class="col-md-6">
                                         <label for="contactPhone" class="form-label">Phone Number</label>
-                                        <input type="tel" class="form-control" id="contactPhone">
+                                        <input type="tel" class="form-control" id="contactPhone" name="phone">
                                     </div>
                                     <div class="col-md-6">
                                         <label for="contactSubject" class="form-label">Subject</label>
-                                        <input type="text" class="form-control" id="contactSubject" required>
+                                        <input type="text" class="form-control" id="contactSubject" name="subject" required>
                                     </div>
                                     <div class="col-12">
                                         <label for="contactMessage" class="form-label">Message</label>
-                                        <textarea class="form-control" id="contactMessage" rows="4" required></textarea>
+                                        <textarea class="form-control" id="contactMessage" name="message" rows="4" required></textarea>
                                     </div>
                                     <div class="col-12 text-center mt-4">
                                         <button type="submit" class="btn btn-green px-5 py-3 rounded-pill">
@@ -925,6 +919,131 @@ if (isset($_SESSION['user_id']) && isset($_SESSION['role_id'])) {
                 }
             });
         });
+    </script>
+    <script>
+    // SweetAlert2 toast for application (careers) status
+    (function() {
+        const params = new URLSearchParams(window.location.search);
+        const status = params.get('status');
+        const section = params.get('section');
+
+        if (section !== 'careers' || !status || typeof Swal === 'undefined') return;
+
+        const baseConfig = {
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 5000,
+            timerProgressBar: true
+        };
+
+        let icon = 'info';
+        let title = 'Processing your request...';
+
+        switch (status) {
+            case 'success':
+                icon = 'success';
+                title = 'Your application has been submitted successfully!';
+                break;
+            case 'error':
+            case 'upload_error':
+                icon = 'error';
+                title = 'There was an error submitting your application. Please try again.';
+                break;
+            case 'duplicate_email':
+                icon = 'warning';
+                title = 'This email is already in our system.';
+                break;
+            case 'duplicate_phone':
+                icon = 'warning';
+                title = 'This phone number is already in our system.';
+                break;
+            case 'incomplete_fields':
+                icon = 'warning';
+                title = 'Please fill in all required fields.';
+                break;
+            case 'resume_required':
+                icon = 'warning';
+                title = 'Please upload your resume (PDF or DOC).';
+                break;
+            case 'invalid_file_type':
+                icon = 'error';
+                title = 'Invalid file type. Use PDF or DOC only.';
+                break;
+            case 'file_too_large':
+                icon = 'error';
+                title = 'File is too large. Maximum size is 5MB.';
+                break;
+            default:
+                return;
+        }
+
+        Swal.fire({
+            ...baseConfig,
+            icon,
+            title
+        });
+
+        // Clean the status parameter from the URL without reloading
+        params.delete('status');
+        const query = params.toString();
+        const newUrl = window.location.pathname + (query ? '?' + query : '') + window.location.hash;
+        window.history.replaceState({}, '', newUrl);
+    })();
+    </script>
+    <script>
+    // SweetAlert2 toast for contact form status
+    (function() {
+        const params = new URLSearchParams(window.location.search);
+        const status = params.get('status');
+        const section = params.get('section');
+
+        if (section !== 'contact' || !status || typeof Swal === 'undefined') return;
+
+        const baseConfig = {
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 5000,
+            timerProgressBar: true
+        };
+
+        let icon = 'info';
+        let title = 'Processing your request...';
+
+        switch (status) {
+            case 'success':
+                icon = 'success';
+                title = 'Your message has been sent successfully!';
+                break;
+            case 'incomplete':
+                icon = 'warning';
+                title = 'Please fill in all required fields.';
+                break;
+            case 'invalid_email':
+                icon = 'warning';
+                title = 'Please enter a valid email address.';
+                break;
+            case 'error':
+                icon = 'error';
+                title = 'There was a problem sending your message. Please try again.';
+                break;
+            default:
+                return;
+        }
+
+        Swal.fire({
+            ...baseConfig,
+            icon,
+            title
+        });
+
+        // Clean the status parameter from the URL without reloading
+        params.delete('status');
+        const query = params.toString();
+        const newUrl = window.location.pathname + (query ? '?' + query : '') + window.location.hash;
+        window.history.replaceState({}, '', newUrl);
+    })();
     </script>
     <script>
     // Phone number validation
